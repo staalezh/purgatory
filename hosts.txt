@@ -1,0 +1,2 @@
+# Put the IP addresses of the hosts you want to protect here.
+# WARNING: Do NOT put the IP address of the firewall here.
