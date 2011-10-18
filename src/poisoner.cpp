@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <thread>
 
 using namespace std;
 using namespace cyanid;
@@ -43,26 +44,29 @@ void Poisoner::handle_packet(const raw_packet& packet)
     const size_t pkt_size = packet.packet_header()->len;
     const size_t arp_size = pkt_size - builder::ethernet::header_size;
 
+    if (arp_size < builder::arp::header_size)
+        return;
+
     builder::ethernet eth(packet.payload(), pkt_size);
     builder::arp      arp(eth.payload(),    arp_size);
-
-    // Say sayonara if this host is not to be firewalled
-    if (count(hosts.begin(), hosts.end(), arp.spa()) == 0 &&
-        count(hosts.begin(), hosts.end(), arp.tpa()) == 0)
-        return;
 
     if (arp.sha() == mac_addr)
         return;
 
+    if (!protect_host(arp.spa()) && !protect_host(arp.tpa()))
+        return;
+
     dump_arp_packet(arp);
 
-    if (arp.oper() == builder::arp::REQUEST) {
-        poison_target(arp.tpa(), arp.spa(), arp.sha());
-    } else {
-        poison_target(gateway_ip, arp.spa(), arp.sha());
-    }
+    if (protect_host(arp.spa())) {
+        if (arp.oper() == builder::arp::REQUEST) {
+            poison_target(arp.tpa(), arp.spa(), arp.sha());
+        } else {
+            poison_target(gateway_ip, arp.spa(), arp.sha());
+        }
 
-    poison_target(arp.spa(), gateway_ip, gateway_mac);
+        poison_target(arp.spa(), gateway_ip, gateway_mac);
+    }
 }
 
 void Poisoner::poison_target(const string& spa,
@@ -90,6 +94,11 @@ void Poisoner::poison_target(const string& spa,
 void Poisoner::operator()()
 {
     run();
+}
+
+bool Poisoner::protect_host(const std::string& h)
+{
+    return count(hosts.begin(), hosts.end(), h) > 0;
 }
 
 void Poisoner::dump_arp_packet(const builder::arp& arp)

@@ -27,6 +27,7 @@ private:
 
     void dump_arp_packet(const cyanid::builder::arp&);
     void init(const cyanid::device&);
+    bool protect_host(const std::string&);
 
     const std::vector<std::string> hosts;
     const std::string gateway_ip;
