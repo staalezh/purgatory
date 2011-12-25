@@ -4,7 +4,8 @@
 
 #include <iostream>
 #include <algorithm>
-#include <vector>
+#include <list>
+#include <sstream>
 #include <string>
 #include <thread>
 
@@ -12,7 +13,7 @@ using namespace std;
 using namespace cyanid;
 
 Poisoner::Poisoner(device& dev,
-        const vector<string>& hosts,
+        const list<string>& hosts,
         const string& gateway_ip,
         const string& gateway_mac) :
     listener(dev),
@@ -34,9 +35,12 @@ Poisoner::Poisoner(Poisoner&& p) :
 
 void Poisoner::init(const cyanid::device& dev)
 {
-    apply_filter("arp");
     mac_addr = utils::mac_to_str(dev.get_mac());
     ip_addr  = utils::addr4_to_str(dev.get_ip());
+
+    stringstream filter;
+    filter << "arp and not (ether src host " << mac_addr << ")";
+    apply_filter(filter.str());
 }
 
 void Poisoner::handle_packet(const raw_packet& packet)
@@ -44,21 +48,19 @@ void Poisoner::handle_packet(const raw_packet& packet)
     const size_t pkt_size = packet.packet_header()->len;
     const size_t arp_size = pkt_size - builder::ethernet::header_size;
 
-    if (arp_size < builder::arp::header_size)
-        return;
+    if (arp_size < builder::arp::header_size) return;
 
     builder::ethernet eth(packet.payload(), pkt_size);
     builder::arp      arp(eth.payload(),    arp_size);
 
-    if (arp.sha() == mac_addr)
-        return;
-
-    if (!protect_host(arp.spa()) && !protect_host(arp.tpa()))
-        return;
+    if (arp.sha() == mac_addr) return;
+    if (!protect_host(arp.spa()) && !protect_host(arp.tpa())) return;
 
     dump_arp_packet(arp);
 
     if (protect_host(arp.spa())) {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
         if (arp.oper() == builder::arp::REQUEST) {
             poison_target(arp.tpa(), arp.spa(), arp.sha());
         } else {

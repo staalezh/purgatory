@@ -2,7 +2,7 @@
 
 #include <cyanid.hpp>
 
-#include <vector>
+#include <list>
 #include <string>
 #include <algorithm>
 #include <iostream>
@@ -10,12 +10,13 @@
 using namespace std;
 using namespace cyanid;
 
-BasicFilter::BasicFilter(const vector<string>& hosts) : hosts(hosts)
+BasicFilter::BasicFilter(const list<string>& hosts) : hosts(hosts)
 { 
 }
 
 bool BasicFilter::validate(const cyanid::raw_packet& pkt)
 {
+    /*
     const size_t pkt_size = pkt.packet_header()->len;
     const size_t ip_size = pkt_size - builder::ethernet::header_size;
 
@@ -30,6 +31,7 @@ bool BasicFilter::validate(const cyanid::raw_packet& pkt)
         return false;
 
     cout << "Routing packet from " << src_ip << " to " << dst_ip << endl;
+    */
 
     return true;
 }

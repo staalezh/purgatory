@@ -3,13 +3,13 @@
 
 #include <cyanid.hpp>
 
-#include <vector>
+#include <list>
 #include <string>
 
 class Poisoner : public cyanid::listener {
 public:
     Poisoner(cyanid::device& device,
-            const std::vector<std::string>& hosts,
+            const std::list<std::string>& hosts,
             const std::string& gateway_ip,
             const std::string& gateway_mac);
 
@@ -29,7 +29,7 @@ private:
     void init(const cyanid::device&);
     bool protect_host(const std::string&);
 
-    const std::vector<std::string> hosts;
+    const std::list<std::string> hosts;
     const std::string gateway_ip;
     const std::string gateway_mac;
 

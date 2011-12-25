@@ -14,6 +14,7 @@ source = """
         src/basic_filter.cpp
         src/poisoner.cpp
         src/router.cpp
+        src/dispatch_queue.cpp
         """
 
 def options(opt):

