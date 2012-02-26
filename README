@@ -1,2 +1,15 @@
 == Purgatory ==
 A simple proof-of-concept ad-hoc firewall.
+
+== Building Purgatory ==
+$ ./waf configure
+$ ./waf
+
+== How to get started ==
+$ cp purgatory.conf.example purgatory.conf
+$ cp hosts.conf.example hosts.conf
+
+Edit purgatory.conf and hosts.conf according to your system, and launch
+purgatory:
+
+$ ./build/purgatory
