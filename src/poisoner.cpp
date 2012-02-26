@@ -59,7 +59,7 @@ void Poisoner::handle_packet(const raw_packet& packet)
     dump_arp_packet(arp);
 
     if (protect_host(arp.spa())) {
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        this_thread::sleep_for(chrono::seconds(1));
 
         if (arp.oper() == builder::arp::REQUEST) {
             poison_target(arp.tpa(), arp.spa(), arp.sha());

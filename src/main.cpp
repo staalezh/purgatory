@@ -1,14 +1,15 @@
+#include "basic_filter.hpp"
 #include "poisoner.hpp"
 #include "router.hpp"
-#include "basic_filter.hpp"
 
 #include <cyanid.hpp>
 
 #include <algorithm>
-#include <iostream>
 #include <fstream>
-#include <string>
+#include <iostream>
 #include <list>
+#include <map>
+#include <string>
 #include <thread>
 
 using namespace std;
@@ -17,18 +18,21 @@ using namespace cyanid;
 void trigger_poisoning(cyanid::device&, const list<string>&);
 void read_hosts(list<string>&, const string&);
 void dump_hosts(const list<string>&);
+map<string, string> read_config(const string&);
 
 int main(int argc, char* argv[])
 {
     using namespace std;
     using namespace cyanid;
 
-    const string iface("wlan0");
-    const string gateway_ip("192.168.1.1");
-    const string gateway_mac("00:1b:2f:0a:ca:70");
+    map<string, string> config(read_config("purgatory.conf"));
+
+    const string iface(config["interface"]);
+    const string gateway_ip(config["gateway-ip"]);
+    const string gateway_mac(config["gateway-mac"]);
 
     list<string> hosts;
-    read_hosts(hosts, "hosts.txt");
+    read_hosts(hosts, config["hosts-file"]);
 
     cout << "Starting ARP poisoning and routing on " << iface << "... ";
 
@@ -56,9 +60,6 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-/**
- * Trigger ARP poisoning by sending ARP requests to the target hosts.
- */
 void trigger_poisoning(cyanid::device& dev, const list<string>& hosts)
 {
     const std::string source_mac(cyanid::utils::mac_to_str(dev.get_mac()));
@@ -104,4 +105,22 @@ void dump_hosts(const list<string>& hosts)
     }
 
     cout << endl;
+}
+
+map<string, string> read_config(const string& file)
+{
+    ifstream is(file);
+
+    map<string, string> config;
+    string line;
+    while (getline(is, line)) {
+        auto it = find(line.begin(), line.end(), ':');
+        string key(line.begin(), it);
+        string value(it + 1, line.end());
+        config[key] = value;
+
+        cerr << key << ":" << value << endl;
+    }
+
+    return config;
 }

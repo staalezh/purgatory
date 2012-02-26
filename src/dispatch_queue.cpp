@@ -47,7 +47,7 @@ void DispatchQueue::handle_packet(const cyanid::raw_packet& pkt)
         arp_cache[arp.spa()] = arp.sha();
 
         cout << "Trying to dispatch packets. Packets in queue: " << queue.size() << endl;
-        std::list<raw_packet> packets;
+        list<raw_packet> packets;
         while (!queue.empty()) {
             packets.push_back(queue.front());
             queue.pop_front();
