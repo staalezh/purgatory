@@ -12,4 +12,4 @@ $ cp hosts.conf.example hosts.conf
 Edit purgatory.conf and hosts.conf according to your system, and launch
 purgatory:
 
-$ ./build/purgatory
+$ sudo ./build/purgatory
