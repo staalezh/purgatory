@@ -2,3 +2,5 @@
 *.o
 .waf*
 .conf*
+purgatory.conf
+hosts.conf

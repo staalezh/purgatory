@@ -1,4 +1,4 @@
 interface:<fill in interface>
 gateway-ip:<fill in gateway ip>
 gateway-mac:<fill in gateway mac>
-hosts-file:hosts.txt
+hosts-file:hosts.conf
